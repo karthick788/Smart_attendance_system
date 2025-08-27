@@ -219,3 +219,5 @@ if __name__ == '__main__':
     print(f"Starting Smart Attendance Dashboard...")
     print(f"Access the dashboard at: http://{FLASK_HOST}:{FLASK_PORT}")
     app.run(host=FLASK_HOST, port=FLASK_PORT, debug=FLASK_DEBUG)
+
+# Updated: 2025-12-19
