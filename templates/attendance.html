@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Records - Smart Attendance System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-3">
+            <i class="fas fa-calendar-check me-2"></i>Attendance Records
+        </h1>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-2"></i>Filter
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="resetDates()">
+                    <i class="fas fa-undo me-2"></i>Reset
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Attendance Summary -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Daily Attendance Summary</h5>
+        <small class="text-muted">{{ start_date }} to {{ end_date }}</small>
+    </div>
+    <div class="card-body">
+        {% if summary %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Day</th>
+                        <th>Total Attendance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in summary %}
+                    <tr>
+                        <td>
+                            <strong>{{ day.date }}</strong>
+                            {% set date_obj = day.date | string | strptime('%Y-%m-%d') %}
+                            {% if date_obj.strftime('%Y-%m-%d') == moment().format('YYYY-MM-DD') %}
+                            <span class="badge bg-primary ms-2">Today</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set date_obj = day.date | string | strptime('%Y-%m-%d') %}
+                            <span class="text-muted">{{ date_obj.strftime('%A') }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success fs-6">{{ day.total_attendance }}</span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('attendance_detail', date=day.date) }}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </a>
+                                <a href="{{ url_for('export_attendance', date=day.date) }}" 
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-download me-1"></i>Export CSV
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Days</h5>
+                        <h3 class="text-primary">{{ summary|length }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Attendance</h5>
+                        <h3 class="text-success">{{ summary|sum(attribute='total_attendance') }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Average Daily</h5>
+                        <h3 class="text-info">{{ "%.1f"|format(summary|sum(attribute='total_attendance') / summary|length) if summary|length > 0 else 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Peak Day</h5>
+                        <h3 class="text-warning">{{ summary|max(attribute='total_attendance') if summary else 0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+            <h4>No Attendance Records</h4>
+            <p>No attendance records found for the selected date range.</p>
+            <button class="btn btn-outline-primary" onclick="resetDates()">
+                <i class="fas fa-calendar-alt me-2"></i>View All Records
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetDates() {
+    // Set to last 7 days
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 7);
+    
+    document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
+    document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+    
+    // Submit form
+    document.querySelector('form').submit();
+}
+
+// Set max date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start_date').max = today;
+    document.getElementById('end_date').max = today;
+});
+</script>
+{% endblock %}

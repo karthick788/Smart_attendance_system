@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Users - Smart Attendance System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-users me-2"></i>User Management
+            </h1>
+            <div>
+                <button class="btn btn-success" onclick="showRegisterInstructions()">
+                    <i class="fas fa-user-plus me-2"></i>Register New User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Registered Users</h5>
+    </div>
+    <div class="card-body">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Face Data</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td><strong>{{ user.id }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-2">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <strong>{{ user.name }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ user.email or 'N/A' }}</td>
+                        <td>{{ user.department or 'N/A' }}</td>
+                        <td>
+                            {% if user.has_face_data %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Available
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Missing
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ user.created_at.split(' ')[0] if user.created_at else 'N/A' }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                {% if not user.has_face_data %}
+                                <button class="btn btn-outline-warning btn-action" 
+                                        onclick="showRegisterInstructions('{{ user.name }}')">
+                                    <i class="fas fa-camera"></i> Add Face Data
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-outline-danger btn-action" 
+                                        onclick="deleteUser('{{ user.name }}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-users fa-3x mb-3"></i>
+            <h4>No Users Registered</h4>
+            <p>Get started by registering your first user</p>
+            <button class="btn btn-primary btn-lg" onclick="showRegisterInstructions()">
+                <i class="fas fa-user-plus me-2"></i>Register First User
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Registration Instructions Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Register New User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>To register a new user, you need to use the command line tool.</strong>
+                </div>
+                
+                <h6>Step 1: Open Command Prompt/Terminal</h6>
+                <p>Navigate to your project directory and run:</p>
+                <div class="bg-dark text-light p-3 rounded mb-3">
+                    <code id="registerCommand">python register_user.py</code>
+                    <button class="btn btn-sm btn-outline-light ms-2" onclick="copyToClipboard('registerCommand')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                
+                <h6>Step 2: Follow the Interactive Prompts</h6>
+                <ul>
+                    <li>Enter the user's name</li>
+                    <li>Enter email (optional)</li>
+                    <li>Enter department (optional)</li>
+                    <li>Position yourself in front of the camera</li>
+                    <li>Press SPACE to capture face samples (10 samples recommended)</li>
+                </ul>
+                
+                <h6>Alternative: Command Line Arguments</h6>
+                <p>You can also provide information directly:</p>
+                <div class="bg-dark text-light p-3 rounded mb-3">
+                    <code>python register_user.py --name "John Doe" --email "john@example.com" --department "IT"</code>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Tips for best results:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Ensure good lighting</li>
+                        <li>Look directly at the camera</li>
+                        <li>Capture samples from different angles</li>
+                        <li>Avoid wearing glasses or hats if possible</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Page
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showRegisterInstructions(userName = '') {
+    if (userName) {
+        document.getElementById('registerCommand').textContent = `python register_user.py --name "${userName}"`;
+    } else {
+        document.getElementById('registerCommand').textContent = 'python register_user.py';
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('registerModal'));
+    modal.show();
+}
+
+function deleteUser(name) {
+    if (confirmDelete(name)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/delete_user/${encodeURIComponent(name)}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent;
+    
+    navigator.clipboard.writeText(text).then(function() {
+        // Show temporary success message
+        const button = element.nextElementSibling;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-light');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-light');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

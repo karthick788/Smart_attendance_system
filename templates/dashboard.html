@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Attendance System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-3">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            <small class="text-muted">{{ current_date }}</small>
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card card-stat success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Total Users</h5>
+                        <h2 class="mb-0">{{ stats.total_users }}</h2>
+                    </div>
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card card-stat h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Today's Attendance</h5>
+                        <h2 class="mb-0">{{ stats.today_attendance }}</h2>
+                    </div>
+                    <div class="stat-icon text-primary">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card card-stat warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">With Face Data</h5>
+                        <h2 class="mb-0">{{ stats.users_with_face_data }}</h2>
+                    </div>
+                    <div class="stat-icon text-warning">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card card-stat danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Days Recorded</h5>
+                        <h2 class="mb-0">{{ stats.total_days_recorded }}</h2>
+                    </div>
+                    <div class="stat-icon text-danger">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Recent Activity -->
+<div class="row">
+    <!-- Attendance Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Weekly Attendance Trend
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="updateChart(7)">7 Days</button>
+                    <button type="button" class="btn btn-outline-primary active" onclick="updateChart(14)">14 Days</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="updateChart(30)">30 Days</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Attendance -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Today's Attendance
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if today_attendance %}
+                    {% for record in today_attendance %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                        <div>
+                            <strong>{{ record.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ record.timestamp.split(' ')[1] }}</small>
+                        </div>
+                        {% if record.confidence %}
+                        <span class="badge bg-success">{{ "%.0f"|format(record.confidence * 100) }}%</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-user-clock fa-3x mb-3"></i>
+                        <p>No attendance records for today</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Attendance Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if summary %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Total Attendance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in summary %}
+                            <tr>
+                                <td>
+                                    <strong>{{ day.date }}</strong>
+                                    {% if day.date == current_date %}
+                                    <span class="badge bg-primary ms-2">Today</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ day.total_attendance }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('attendance_detail', date=day.date) }}" 
+                                       class="btn btn-sm btn-outline-primary btn-action">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <a href="{{ url_for('export_attendance', date=day.date) }}" 
+                                       class="btn btn-sm btn-outline-success btn-action">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                    <p>No attendance records found</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let attendanceChart;
+
+// Initialize chart
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    updateChart(14); // Default to 14 days
+    
+    // Auto-refresh every 30 seconds
+    enableAutoRefresh(30000);
+});
+
+function initChart() {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    attendanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Daily Attendance',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function updateChart(days) {
+    // Update active button
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Fetch chart data
+    fetch(`/api/attendance/chart?days=${days}`)
+        .then(response => response.json())
+        .then(data => {
+            const labels = data.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const counts = data.map(item => item.count);
+            
+            attendanceChart.data.labels = labels;
+            attendanceChart.data.datasets[0].data = counts;
+            attendanceChart.update();
+        })
+        .catch(error => {
+            console.error('Error fetching chart data:', error);
+        });
+}
+</script>
+{% endblock %}

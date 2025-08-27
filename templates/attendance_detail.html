@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Details - {{ date }} - Smart Attendance System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-calendar-day me-2"></i>Attendance Details
+                <small class="text-muted">{{ date }}</small>
+            </h1>
+            <div>
+                <a href="{{ url_for('attendance') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Summary
+                </a>
+                <a href="{{ url_for('export_attendance', date=date) }}" class="btn btn-success">
+                    <i class="fas fa-download me-2"></i>Export CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Date Info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
+                    <h5>{{ date }}</h5>
+                    {% set date_obj = date | strptime('%Y-%m-%d') %}
+                    <p class="text-muted mb-0">{{ date_obj.strftime('%A, %B %d, %Y') }}</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="fas fa-users fa-2x text-success mb-2"></i>
+                    <h5>{{ records|length }}</h5>
+                    <p class="text-muted mb-0">Total Attendance</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                    <h5>
+                        {% if records %}
+                            {{ records[0].timestamp.split(' ')[1].split(':')[0] }}:{{ records[0].timestamp.split(' ')[1].split(':')[1] }}
+                        {% else %}
+                            --:--
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted mb-0">First Check-in</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h5>
+                        {% if records %}
+                            {{ records[-1].timestamp.split(' ')[1].split(':')[0] }}:{{ records[-1].timestamp.split(' ')[1].split(':')[1] }}
+                        {% else %}
+                            --:--
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted mb-0">Last Check-in</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Records -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Individual Attendance Records</h5>
+    </div>
+    <div class="card-body">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Time</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td><strong>{{ loop.index }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-2">
+                                    {{ record.name[0].upper() }}
+                                </div>
+                                <strong>{{ record.name }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ record.timestamp.split(' ')[1] }}
+                            </span>
+                        </td>
+                        <td>{{ record.email or 'N/A' }}</td>
+                        <td>{{ record.department or 'N/A' }}</td>
+                        <td>
+                            {% if record.confidence %}
+                                {% set conf_percent = (record.confidence * 100) | round %}
+                                {% if conf_percent >= 80 %}
+                                    <span class="badge bg-success">{{ conf_percent }}%</span>
+                                {% elif conf_percent >= 60 %}
+                                    <span class="badge bg-warning">{{ conf_percent }}%</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ conf_percent }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Timeline View -->
+        <div class="mt-4">
+            <h6>Timeline View</h6>
+            <div class="timeline">
+                {% for record in records %}
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ record.name }}</strong>
+                                <small class="text-muted d-block">{{ record.department or 'No department' }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="badge bg-primary">{{ record.timestamp.split(' ')[1] }}</div>
+                                {% if record.confidence %}
+                                <div class="badge bg-success mt-1">{{ (record.confidence * 100) | round }}%</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-user-times fa-3x mb-3"></i>
+            <h4>No Attendance Records</h4>
+            <p>No one marked attendance on {{ date }}</p>
+            <a href="{{ url_for('attendance') }}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar-alt me-2"></i>View Other Dates
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -23px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 3px solid #007bff;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh if viewing today's data
+document.addEventListener('DOMContentLoaded', function() {
+    const date = '{{ date }}';
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (date === today) {
+        // Refresh every 30 seconds for today's data
+        enableAutoRefresh(30000);
+    }
+});
+</script>
+{% endblock %}
