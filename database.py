@@ -197,3 +197,5 @@ class AttendanceDatabase:
         conn.close()
         
         return deleted_rows > 0
+
+# Updated: 2025-12-19
