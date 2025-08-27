@@ -245,3 +245,5 @@ class FaceRecognitionModel:
                 return False, f"Face too small. Minimum size: {MIN_FACE_SIZE}"
             
             return True, "Valid face image"
+
+# Updated: 2025-12-19
