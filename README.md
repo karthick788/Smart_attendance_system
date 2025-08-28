@@ -68,3 +68,5 @@ smart-attendance-system/
 ## License
 
 MIT License
+
+<!-- Updated: 2025-12-19 -->
