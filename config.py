@@ -49,3 +49,5 @@ def get_today_log_file():
     return os.path.join(ATTENDANCE_LOGS_DIR, f'attendance_{today}.csv')
 
 # Updated: 2025-12-19
+
+# Updated: 2025-12-19
