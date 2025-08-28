@@ -47,3 +47,5 @@ def get_today_log_file():
     """Get today's attendance log file path"""
     today = datetime.now().strftime(DATE_FORMAT)
     return os.path.join(ATTENDANCE_LOGS_DIR, f'attendance_{today}.csv')
+
+# Updated: 2025-12-19
