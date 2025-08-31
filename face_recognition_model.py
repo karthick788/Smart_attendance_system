@@ -247,3 +247,5 @@ class FaceRecognitionModel:
             return True, "Valid face image"
 
 # Updated: 2025-12-19
+
+# Updated: 2025-12-19
